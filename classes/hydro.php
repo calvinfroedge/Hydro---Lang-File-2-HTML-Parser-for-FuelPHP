@@ -35,30 +35,41 @@ class Hydro
 		{
 			foreach($content as $k=>$v)
 			{
+				$not_parent = true;
 				//Check to see if the tag has a class or id
 				list($tag, $attributes) = self::_check_attributes($k);
 						
-				//Check to see if the tag is an html element and does not contain spaces, if not make it a div
-				if(!in_array($tag, self::$_considered_html) AND !strstr($tag, ' '))
+				//Check to see if the tag is an html element, is not numeric and does not contain spaces, if not make it a div
+				if(!in_array($tag, self::$_considered_html) AND !strstr($tag, ' ') AND !is_numeric($tag))
 				{
 					$attributes = array('class' => $tag);
 					$return_string .= html_tag('div', $attributes, self::parse($v));
 				}
 				//End "tag is html?" check
 				
+				if(is_array($v) AND !array_key_exists($tag, self::$_as_children))
+				{
+					$return_string .= self::_tag_open($tag, $attributes);
+					
+					foreach($v as $child_key=>$child_val)
+					{
+						$return_string .= self::parse($child_val);
+					}
+					
+					$return_string .= "</$tag>";
+				}
 				//Check to see if the tag is a parent tag, like a <ul>
-				$not_parent = true;
-				if(array_key_exists($tag, self::$_as_children))
+				else if(is_array($v) AND array_key_exists($tag, self::$_as_children))
 				{	
 					$not_parent = false;
-					if(method_exists('Html', strtolower($tag)))
+					$child_tag = self::$_as_children[$tag];
+					
+					$return_string .= self::_tag_open($tag, $attributes);
+					foreach($v as $child_key=>$child_val)
 					{
-						$return_string .= \Html::$tag($v, $attributes);
-					}
-					else
-					{
-						$return_string .= html_tag($tag, $attributes, $v);
-					}
+						$return_string .= "<$child_tag>".self::parse($child_val)."</$child_tag>";
+					}	
+					$return_string .= "</$tag>";				
 				}
 				//End parent tag check
 				
@@ -112,6 +123,24 @@ class Hydro
 		}
 		
 		return array($tag, $attributes);
+	}
+
+	/*
+	* Builds a tag open
+	*
+	* @param	string	The tag
+	* @param	string	The tag attributes
+	* @return	string	The built tag
+	*/		
+	private static function _tag_open($tag, $attributes)
+	{
+		$return_string = "<$tag";
+		foreach ($attributes as $attribute_key=>$attribute_value)
+		{
+			$return_string .= ' '.$attribute_key.'="'.$attribute_value.'"';
+		}
+		$return_string .= ">";	
+		return $return_string;
 	}
 
 	/*

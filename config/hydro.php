@@ -17,7 +17,9 @@ return array(
 		'code'
 	),
 	'as_children' => array(
-		'ul' => 'li'
+		'ul' => 'li',
+		'ol' => 'li',
+		'tr' => 'td'
 	)
 );
 
