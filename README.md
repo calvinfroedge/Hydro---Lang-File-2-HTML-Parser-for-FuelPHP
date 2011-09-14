@@ -8,8 +8,6 @@ I got annoyed with passing variables from my language files, to my controller, t
 
 Currently only available as download or clone from Github. Like any other package it must be put in its own 'hydro' dir in the packages dir and added to your app/config/config.php as an always loaded package.
 
-Make sure you put your API key in the config/hydro.php
-
 ## Usage
 
 Make sure you have a well formed array of content in a lang file, in this format:
@@ -70,7 +68,7 @@ This will pump HTML into your view that looks like this:
 
 As you can see, any array key which does not have a '.' in it and is not a valid HTML tag is automatically assumed to be a div, and a div is created with that key as its class.
 
-You should also note that for tags like <ul>, you don't have to create keys for the children.
+You should also note that for tags like `<ul>`, you don't have to create keys for the children.
 
 The one word of caution, and the one limitation at this point, is that you cannot have multiple occurrences of the same array key.  You'll need to do el.class for each and every paragraph, for example.  A check for a parent with numeric keys could be added if someone wants to help there = ).
 
