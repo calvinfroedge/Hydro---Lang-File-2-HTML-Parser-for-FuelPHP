@@ -70,9 +70,17 @@ As you can see, any array key which does not have a '.' in it and is not a valid
 
 You should also note that for tags like `<ul>`, you don't have to create keys for the children.
 
-The one word of caution, and the one limitation at this point, is that you cannot have multiple occurrences of the same array key.  You'll need to do el.class for each and every paragraph, for example.  A check for a parent with numeric keys could be added if someone wants to help there = ).
+## Repeating Array Keys
 
-Ask me if any questions.  I coded this up in about an hour, so there may be bugs.  Enjoy = )
+The one word of caution is that you obviously cannot have multiple occurrences of the same array key in your lang file.  The latter will overwrite the former.  If the tag is not a parent tag (like a ul or ol), and you want it to repeat, you can simply add a numerically indexed array using that tag.  For example, a group of paragraph tags:
+
+```php
+p => array(
+	'This is one paragraph',
+	'This is the next paragraph'
+	'And another'
+)
+```
 
 ## LICENSE: 
 
