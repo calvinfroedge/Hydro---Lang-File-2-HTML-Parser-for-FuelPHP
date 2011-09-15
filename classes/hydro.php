@@ -31,10 +31,21 @@ class Hydro
 	public static function parse($content, $wrapper = null)
 	{
 		$return_string = '';
+
 		if(is_array($content))
 		{
-			$return_string .= self::_parse_array($content, $wrapper);
-
+			if(!is_null($wrapper))
+			{
+				list($tag, $attributes) = self::_check_attributes($wrapper);
+				$return_string .= self::_tag_open($tag, $attributes);
+			}
+			
+			$return_string .= self::_parse_array($content);
+			
+			if(!is_null($wrapper))
+			{
+				$return_string .= "</$tag>";
+			}
 		}
 		else if (is_string($content))
 		{
@@ -42,61 +53,6 @@ class Hydro
 		}
 		
 		return $return_string;
-	}
-
-	/*
-	* Checks a key to see if any attributes should be added to the tag
-	*
-	* @param	string	The key to check
-	*/	
-	private static function _check_attributes($key)
-	{	
-		$attributes = array();
-		
-		if(strstr($key, ' ') === FALSE)
-		{
-			if(strstr($key, '.'))
-			{
-				$exploded = explode('.', $key);
-				$tag = $exploded[0];
-				if (empty($exploded[0])) $tag = 'div';
-				$class = $exploded[1];	
-				$attributes['class'] = $class;
-			}
-			else if(strstr($key, '#'))
-			{
-				$exploded = explode('#', $key);
-				$tag = $exploded[0];
-				if (empty($exploded[0])) $tag = 'div';
-				$id = $exploded[1];	
-				$attributes['id'] = $id;					
-			}
-			else
-			{
-				$tag = $key;			
-			}
-		}
-		else
-		{
-			$exploded = explode(' ', $key);
-			$tag = $exploded[0];
-			unset($exploded[0]);
-			foreach($exploded as $k=>$v)
-			{
-				$attrs = explode(',', $v);
-				
-				foreach($attrs as $attr)
-				{
-					$exploded_attr = explode('=', $attr);
-					if(isset($exploded_attr[1]))
-					{
-						$attributes[$exploded_attr[0]] = $exploded_attr[1];
-					}
-				}
-			}
-		}
-
-		return array($tag, $attributes);
 	}
 
 	/*
@@ -132,21 +88,11 @@ class Hydro
 		$return_string = '';
 		foreach($content as $k=>$v)
 		{
-			$not_parent = true;
-				
-			if(!empty($wrapper))
-			{
-				$return_string .= self::_tag_open($wrapper);
-				$return_string .= self::parse($v, $k);
-				$return_string .= "</$wrapper>";
-			}
-
 			list($tag, $attributes) = self::_check_attributes($k);
-				
+			$return_string .= self::_tag_open($tag, $attributes);
+			
 			if(is_array($v) AND !array_key_exists($tag, self::$_as_children))
-			{
-				$return_string .= self::_tag_open($tag, $attributes);
-					
+			{	
 				foreach($v as $child_key=>$child_val)
 				{
 					$return_string .= self::parse($child_val, $child_key);
@@ -154,28 +100,22 @@ class Hydro
 					
 				$return_string .= "</$tag>";
 			}
-			//Check to see if the tag is a parent tag, like a <ul>
 			else if(is_array($v) AND array_key_exists($tag, self::$_as_children))
 			{	
-				$not_parent = false;
 				$child_tag = self::$_as_children[$tag];
 					
-				$return_string .= self::_tag_open($tag, $attributes);
 				foreach($v as $child_key=>$child_val)
 				{
 					$return_string .= "<$child_tag>".self::parse($child_val)."</$child_tag>";
 				}	
 				$return_string .= "</$tag>";				
 			}
-			//End parent tag check
-				
-			//If the array is numerically indexed and is not a parent tag, array keys will be repeated
-			if($not_parent === true AND is_array($v) AND !self::_is_assoc($v))
+
+			
+			else
 			{
-				foreach($v as $ni_key=>$ni_val)
-				{
-					$return_string .= html_tag($tag, $attributes, $ni_val);
-				}
+				$return_string .= self::parse($v);
+				$return_string .= "</$tag>";			
 			}
 		}
 		return $return_string;	
@@ -190,10 +130,7 @@ class Hydro
 	*/		
 	private static function _tag_open($tag, $attributes = null)
 	{	
-		if ($tag[0] === '.' OR $tag[0] === '#')
-		{
-			$tag = 'div'.$tag;
-		}
+
 		$return_string = '';
 		$return_string = "<$tag";
 		if(!is_null($attributes))
@@ -206,6 +143,77 @@ class Hydro
 		$return_string .= ">";	
 		return $return_string;
 	}
+
+	/*
+	* Checks a key to see if any attributes should be added to the tag
+	*
+	* @param	string	The key to check
+	*/	
+	private static function _check_attributes($key)
+	{
+		$attributes = array();
+		
+		if($key[0] === '.' OR $key[0] === '#')
+		{
+			$tag = 'div';
+			$div = substr($key, 1, strlen($key));			
+		}
+
+		if($key[0] === '.')
+		{
+			$attributes['class'] = $div;
+		}
+		
+		if($key[0] === '#')
+		{
+			$attributes['id'] = $div;
+		}
+
+		if($key[0] === '.' OR $key[0] === '#')
+		{
+			$key = substr($key, 1, strlen($key));		
+		}				
+
+		if(strstr($key, '.'))
+		{
+			if(strstr($key, ' '))
+			{
+				$sep_by_space = explode(' ', $key);
+				$key = $sep_by_space[0];
+			}	
+			else
+			{
+				$key_to_split = $key;
+			}				
+			list($tag, $class) = explode('.', $key_to_split);
+			$attributes['class'] = $class;
+		}
+		
+		if(strstr($key, '#'))
+		{
+			if(strstr($key, ' '))
+			{
+				$sep_by_space = explode(' ', $key);
+				$key_to_split = $sep_by_space[0];
+			}
+			else
+			{
+				$key_to_split = $key;
+			}
+			if(substr_count($key_to_split, '#')  > 0)
+			{
+				list($tag, $id) = explode('#', $key_to_split);	
+				$attributes['id'] = $id;
+			}			
+		}	
+
+		if(!isset($tag))
+		{
+			$tag = $key;
+		}		
+
+		return array($tag, $attributes);
+	}	
 
 	/*
 	* Checks whether the array is associative or numerically indexed
