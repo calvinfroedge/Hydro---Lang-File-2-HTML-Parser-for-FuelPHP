@@ -137,7 +137,7 @@ class Hydro
 		{
 			foreach ($attributes as $attribute_key=>$attribute_value)
 			{
-				$return_string .= ' '.$attribute_key.'="'.$attribute_value.'"';
+				$return_string .= ' '.$attribute_key.'='.$attribute_value.'';
 			}
 		}
 		$return_string .= ">";	
@@ -179,7 +179,13 @@ class Hydro
 			if(strstr($key, ' '))
 			{
 				$sep_by_space = explode(' ', $key);
-				$key = $sep_by_space[0];
+				$key_to_split = $sep_by_space[0];
+				unset($sep_by_space[0]);
+				foreach($sep_by_space as $sep_by_space_explode)
+				{
+					list($attr_key, $attr_value) = explode('=', $sep_by_space_explode);
+					$attributes[$attr_key] = $attr_value;
+				}
 			}	
 			else
 			{
@@ -195,6 +201,12 @@ class Hydro
 			{
 				$sep_by_space = explode(' ', $key);
 				$key_to_split = $sep_by_space[0];
+				unset($sep_by_space[0]);
+				foreach($sep_by_space as $sep_by_space_explode)
+				{
+					list($attr_key, $attr_value) = explode('=', $sep_by_space_explode);
+					$attributes[$attr_key] = $attr_value;
+				}				
 			}
 			else
 			{
